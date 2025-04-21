@@ -24,6 +24,6 @@ public class ThrowingKnife : MonoBehaviour
 
         GameObject bullet = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
 
-        bullet.GetComponent<Bullet>().SetDirection(direction);
+        bullet.GetComponent<Knife>().SetDirection(direction);
     }
 }
