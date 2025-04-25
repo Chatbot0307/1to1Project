@@ -79,7 +79,7 @@ public class Player : MonoBehaviour
 
             trail.emitting = false;
 
-            StartCoroutine(CameraShake.cameraInstance.Shake(0.2f, 0.2f));
+            StartCoroutine(CameraShake.Instance.Shake(0.2f, 0.2f));
         }
         Time.timeScale = 1f;
         Time.fixedDeltaTime = 0.02f;

@@ -3,31 +3,40 @@ using System.Collections;
 
 public class CameraShake : MonoBehaviour
 {
-    public static CameraShake cameraInstance;
+    public static CameraShake Instance { get; private set; }
 
-    private Vector3 initialPosition;
+    private CameraFollow cameraFollow;
 
     private void Awake()
     {
-        cameraInstance = this;
-        initialPosition = transform.localPosition;
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+
+        cameraFollow = GetComponent<CameraFollow>();
     }
 
     public IEnumerator Shake(float duration, float magnitude)
     {
-        float elapsed = 0f;
+        if (cameraFollow != null) cameraFollow.SetShakeState(true);
 
+        Vector3 originalPos = transform.position;
+
+        float elapsed = 0f;
         while (elapsed < duration)
         {
-            float offsetX = Random.Range(-1f, 1f) * magnitude;
-            float offsetY = Random.Range(-1f, 1f) * magnitude;
+            float x = Random.Range(-1f, 1f) * magnitude;
+            float y = Random.Range(-1f, 1f) * magnitude;
 
-            transform.localPosition = initialPosition + new Vector3(offsetX, offsetY, 0f);
+            transform.position = new Vector3(originalPos.x + x, originalPos.y + y, -10);
 
             elapsed += Time.unscaledDeltaTime;
             yield return null;
         }
 
-        transform.localPosition = initialPosition;
+        if (cameraFollow != null)
+        {
+            transform.position = new Vector3(cameraFollow.transform.position.x, cameraFollow.transform.position.y, -10);
+            cameraFollow.SetShakeState(false);
+        }
     }
 }
