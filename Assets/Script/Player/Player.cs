@@ -1,26 +1,27 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class Player : MonoBehaviour
 {
     public static Player playerInstance;
 
-    [Header("Stats")]
-    public int moveSpeed = 10;
-
-    public int jumpCount = 1;
-    public int jumpForce = 5;
-
-    [Header("Effects")]
     public TrailRenderer trail;
+    public GameObject particleSystem;
 
-    private Rigidbody2D rigid;
+    private float horizontal;
+    private bool isFacingRight = true;
+    private bool isMoving;
+    [SerializeField] private float speed = 12f;
+    [SerializeField] private float jumpingPower = 20f;
+    
+    [SerializeField] private Rigidbody2D rb;
+    [SerializeField] private Transform groundCheck;
+    [SerializeField] private LayerMask groundLayer;
 
     private void Awake()
     {
-        if(playerInstance == null)
+        if (playerInstance == null)
         {
             playerInstance = this;
         }
@@ -28,13 +29,16 @@ public class Player : MonoBehaviour
         {
             Destroy(gameObject);
         }
-        rigid = GetComponent<Rigidbody2D>();
     }
 
     void Update()
     {
+        horizontal = Input.GetAxisRaw("Horizontal");
         Jump();
+        Flip();
+        Particle();
     }
+
     private void FixedUpdate()
     {
         Move();
@@ -42,25 +46,46 @@ public class Player : MonoBehaviour
 
     private void Move()
     {
-        float h = Input.GetAxis("Horizontal");
-
-        transform.position += new Vector3(h, 0, 0) * moveSpeed * Time.deltaTime;
+        rb.velocity = new Vector2(horizontal * speed, rb.velocity.y);
     }
 
     private void Jump()
     {
-        if (jumpCount != 0 && Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetButtonDown("Jump") && IsGrounded())
         {
-            rigid.AddForce(Vector3.up * jumpForce, ForceMode2D.Impulse);
-            jumpCount--;
+            rb.AddForce(Vector3.up * jumpingPower, ForceMode2D.Impulse);
         }
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
+    private void Particle()
     {
-        if(collision.gameObject.CompareTag("Ground"))
+        if (IsGrounded() == false)
         {
-            jumpCount = 1;
+            particleSystem.SetActive(false);
+        }
+        else if (Input.GetButton("Horizontal"))
+        {
+            particleSystem.SetActive(true);
+        }
+        else if (Input.GetButtonUp("Horizontal"))
+        {
+            particleSystem.SetActive(false);
+        }
+    }
+
+    private bool IsGrounded()
+    {
+        return Physics2D.OverlapCircle(groundCheck.position, 0.2f, groundLayer);
+    }
+
+    private void Flip()
+    {
+        if (isFacingRight && horizontal < 0f || !isFacingRight && horizontal > 0f)
+        {
+            isFacingRight = !isFacingRight;
+            Vector3 localScale = transform.localScale;
+            localScale.x *= -1f;
+            transform.localScale = localScale;
         }
     }
 
@@ -75,7 +100,24 @@ public class Player : MonoBehaviour
 
             yield return new WaitForSecondsRealtime(0.2f);
 
-            transform.position = enemyPos;
+            Vector3 teleportPos;
+
+            if (transform.position.x < enemyPos.x)
+            {
+                if (horizontal == 1)
+                    teleportPos = enemyPos + Vector3.right;
+                else
+                    teleportPos = enemyPos + Vector3.left * 0.5f;
+            }
+            else
+            {
+                if (horizontal == -1)
+                    teleportPos = enemyPos + Vector3.left;
+                else
+                    teleportPos = enemyPos + Vector3.right * 0.5f;
+            }
+
+            transform.position = teleportPos;
 
             trail.emitting = false;
 
