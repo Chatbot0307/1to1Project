@@ -3,27 +3,50 @@ using UnityEngine;
 
 public class Knife : MonoBehaviour
 {
-    public float speed = 100f;
-    public int damage = 1;
-    private Vector2 direction;
+    [SerializeField] private float speed = 100f;
+    [SerializeField] private float maxDistanceFromCamera = 30f;
 
-    public void SetDirection(Vector2 dir)
+    private Rigidbody2D rb;
+    private Vector2 direction;
+    private Vector3 cameraPositionCached;
+    private float maxDistanceSqr;
+    public float damage = 1f;
+
+    public void Initialize(Vector2 dir)
     {
         direction = dir.normalized;
     }
 
-    void Update()
+    private void Awake()
     {
-        transform.Translate(direction * speed * Time.deltaTime);
+        rb = GetComponent<Rigidbody2D>();
+        if (rb == null)
+            rb = gameObject.AddComponent<Rigidbody2D>();
 
-        if (transform.position.magnitude > 50f)
+        rb.gravityScale = 0f;
+        rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+        rb.isKinematic = false;
+
+        cameraPositionCached = Camera.main.transform.position;
+        maxDistanceSqr = maxDistanceFromCamera * maxDistanceFromCamera;
+    }
+
+    private void Start()
+    {
+        rb.velocity = direction * speed;
+    }
+
+    private void FixedUpdate()
+    {
+        if ((transform.position - cameraPositionCached).sqrMagnitude > maxDistanceSqr)
         {
             Destroy(gameObject);
         }
     }
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.gameObject.CompareTag("Enemy") && Player.playerInstance != null)
+        if (collision.CompareTag("Enemy") && Player.playerInstance != null)
         {
             StartCoroutine(Player.playerInstance.TeleportEffect(collision.transform.position));
         }

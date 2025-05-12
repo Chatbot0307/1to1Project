@@ -4,26 +4,26 @@ using UnityEngine;
 
 public class ThrowingKnife : MonoBehaviour
 {
-    public GameObject bulletPrefab;
-    public Transform firePoint;
+    [SerializeField] private GameObject knifePrefab;
+    [SerializeField] private Transform firePoint;
 
-    void Update()
+    private void Update()
     {
         if (Input.GetMouseButtonDown(0))
         {
-            Shoot();
+            ThrowKnife();
         }
     }
 
-    void Shoot()
+    private void ThrowKnife()
     {
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mousePos.z = 0;
+        Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        mouseWorldPos.z = 0;
 
-        Vector2 direction = mousePos - firePoint.position;
+        Vector2 direction = (mouseWorldPos - firePoint.position).normalized;
 
-        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
-
-        bullet.GetComponent<Knife>().SetDirection(direction);
+        GameObject knifeObj = Instantiate(knifePrefab, firePoint.position, Quaternion.identity);
+        Knife knife = knifeObj.GetComponent<Knife>();
+        knife.Initialize(direction);
     }
 }
